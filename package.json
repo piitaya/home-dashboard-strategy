@@ -1,0 +1,34 @@
+{
+  "name": "physaroom",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "rollup -c --watch --bundleConfigAsCjs",
+    "build": "rollup -c --bundleConfigAsCjs",
+    "format": "prettier --write ."
+  },
+  "author": "Paul Bottein",
+  "license": "ISC",
+  "dependencies": {
+    "home-assistant-js-websocket": "^8.0.1",
+    "lit": "^2.6.0",
+    "memoize-one": "^6.0.0",
+    "superstruct": "^0.15.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.12",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.3.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "eslint": "^8.31.0",
+    "prettier": "^2.8.2",
+    "rollup": "^3.9.1",
+    "rollup-plugin-serve": "^2.0.2",
+    "tslib": "^2.7.0",
+    "typescript": "^4.9.4"
+  }
+}
