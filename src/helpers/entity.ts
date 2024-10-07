@@ -3,6 +3,24 @@ import { ensureArray } from "../ha/common/array/ensure-array";
 import { computeDomain } from "../ha/common/entity";
 import { HomeAssistant } from "../ha/types";
 
+export const ASSIST_DOMAIN = ["assist_satellite", "conversation", "stt", "tts"];
+
+export const HIDDEN_DOMAIN = new Set([
+  "automation",
+  "configurator",
+  "device_tracker",
+  "event",
+  "geo_location",
+  "notify",
+  "persistent_notification",
+  "script",
+  "sun",
+  "tag",
+  "todo",
+  "zone",
+  ...ASSIST_DOMAIN,
+]);
+
 export const getEntityArea = (hass: HomeAssistant, entityId: string) => {
   const entity = hass.entities[entityId];
   if (!entity) {
@@ -47,3 +65,6 @@ export const entityFilter = (hass: HomeAssistant, filter: EntityFilter) => {
     return true;
   };
 };
+
+export const excludeIds = (ids: string[]) => (entityId: string) =>
+  !ids.includes(entityId);
