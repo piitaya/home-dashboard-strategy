@@ -37,7 +37,7 @@ export class HomeViewStrategy extends ReactiveElement {
     const areas = Object.values(hass.areas).sort((a, b) => {
       const floorA = a.floor_id ? hass.floors[a.floor_id] : null;
       const floorB = b.floor_id ? hass.floors[b.floor_id] : null;
-      return (floorA?.level || -1) - (floorB?.level || -1);
+      return -1 * ((floorB?.level ?? Infinity) - (floorA?.level ?? Infinity));
     });
 
     const areaSections = areas.map<LovelaceSectionConfig>((area) => {
@@ -68,6 +68,13 @@ export class HomeViewStrategy extends ReactiveElement {
               action: "navigate",
               navigation_path: computeAreaPath(area),
             },
+          },
+          {
+            type: "area",
+            area: area.area_id,
+            navigation_path: computeAreaPath(area),
+            alert_classes: [],
+            sensor_classes: [],
           },
         ],
       };

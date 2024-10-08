@@ -12,6 +12,8 @@ import {
 } from "../../helpers/entity";
 import { arrayDiff } from "../../common/array";
 import { lightSupportsBrightness } from "../../ha/data/light";
+import { supportsFeature } from "../../ha/common/entity/supports-feature";
+import { CoverEntityFeature } from "../../ha/data/cover";
 
 export type AreaViewStrategyConfig = {
   area?: string;
@@ -132,7 +134,12 @@ export class AreaViewStrategy extends ReactiveElement {
     }
 
     // Climate section
-    const coverIds = entityIds.filter(
+    const climateIds = entityIds.filter(
+      entityFilter(hass, { domain: ["climate", "humidifier"] })
+    );
+    entityIds = arrayDiff(entityIds, climateIds);
+
+    const shutterIds = entityIds.filter(
       entityFilter(hass, {
         domain: "cover",
         device_class: [
@@ -146,12 +153,7 @@ export class AreaViewStrategy extends ReactiveElement {
         ],
       })
     );
-    entityIds = arrayDiff(entityIds, coverIds);
-
-    const climateIds = entityIds.filter(
-      entityFilter(hass, { domain: ["climate", "humidifier"] })
-    );
-    entityIds = arrayDiff(entityIds, climateIds);
+    entityIds = arrayDiff(entityIds, shutterIds);
 
     const windowSensorIds = entityIds.filter(
       entityFilter(hass, { domain: "binary_sensor", device_class: "window" })
@@ -159,7 +161,7 @@ export class AreaViewStrategy extends ReactiveElement {
     entityIds = arrayDiff(entityIds, windowSensorIds);
 
     if (
-      coverIds.length > 0 ||
+      shutterIds.length > 0 ||
       climateIds.length > 0 ||
       windowSensorIds.length > 0
     ) {
@@ -171,20 +173,6 @@ export class AreaViewStrategy extends ReactiveElement {
             heading: "Climate",
             icon: "mdi:home-thermometer",
           },
-          ...(coverIds.length > 0
-            ? [
-                {
-                  type: "heading",
-                  heading: "Shutters",
-                  heading_style: "subtitle",
-                  icon: "mdi:window-shutter",
-                },
-              ]
-            : []),
-          ...coverIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
           ...(climateIds.length > 0
             ? [
                 {
@@ -199,6 +187,36 @@ export class AreaViewStrategy extends ReactiveElement {
             type: "tile",
             entity: entityId,
           })),
+          ...(shutterIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Shutters",
+                  heading_style: "subtitle",
+                  icon: "mdi:window-shutter",
+                },
+              ]
+            : []),
+          ...shutterIds.map((entityId) => {
+            const stateObj = hass.states[entityId];
+            const supportsOpenClose = supportsFeature(
+              stateObj,
+              CoverEntityFeature.OPEN || CoverEntityFeature.CLOSE
+            );
+            const supportsTilt = supportsFeature(
+              stateObj,
+              CoverEntityFeature.OPEN_TILT || CoverEntityFeature.CLOSE_TILT
+            );
+            return {
+              type: "tile",
+              entity: entityId,
+              features: supportsOpenClose
+                ? [{ type: "cover-open-close" }]
+                : supportsTilt
+                ? [{ type: "cover-tilt" }]
+                : [],
+            };
+          }),
           ...(windowSensorIds.length > 0
             ? [
                 {
@@ -304,6 +322,10 @@ export class AreaViewStrategy extends ReactiveElement {
                 },
               ]
             : []),
+          ...doorIds.map((entityId) => ({
+            type: "tile",
+            entity: entityId,
+          })),
           ...(doorSensorIds.length > 0
             ? [
                 {
@@ -329,7 +351,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: ["power"],
       })
     );
-    entityIds = arrayDiff(entityIds, lightIds);
+    entityIds = arrayDiff(entityIds, powerSensorIds);
 
     if (powerSensorIds.length > 0) {
       sections.push({
@@ -352,7 +374,6 @@ export class AreaViewStrategy extends ReactiveElement {
         ],
       });
     }
-    entityIds = arrayDiff(entityIds, powerSensorIds);
 
     const energySensorIds = entityIds.filter(
       entityFilter(hass, {
@@ -381,10 +402,20 @@ export class AreaViewStrategy extends ReactiveElement {
             heading: "Sensors",
             icon: "mdi:memory",
           },
-          ...otherSensorIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
+          ...otherSensorIds.map((entityId) => {
+            const domain = computeDomain(entityId);
+            if (domain === "sensor") {
+              return {
+                type: "sensor",
+                entity: entityId,
+                graph: "line",
+              };
+            }
+            return {
+              type: "entity",
+              entity: entityId,
+            };
+          }),
         ],
       });
     }
