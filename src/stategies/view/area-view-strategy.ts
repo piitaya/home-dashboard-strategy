@@ -374,7 +374,7 @@ export class AreaViewStrategy extends ReactiveElement {
     if (otherSensorIds.length > 0) {
       sections.push({
         type: "grid",
-        column_span: 4,
+        column_span: 3,
         cards: [
           {
             type: "heading",
@@ -395,7 +395,7 @@ export class AreaViewStrategy extends ReactiveElement {
     if (otherIds.length > 0) {
       sections.push({
         type: "grid",
-        column_span: 4,
+        column_span: 3,
         cards: [
           {
             type: "heading",
@@ -412,6 +412,7 @@ export class AreaViewStrategy extends ReactiveElement {
 
     return {
       type: "sections",
+      max_columns: 3,
       badges: badges,
       sections: sections,
     };

@@ -75,6 +75,7 @@ export class HomeViewStrategy extends ReactiveElement {
 
     return {
       type: "sections",
+      max_columns: 3,
       sections: [...areaSections],
     };
   }
