@@ -1,3 +1,3 @@
-# Home strategy (lab)
+# Home dashboard strategy (lab)
 
 Just an experiment
