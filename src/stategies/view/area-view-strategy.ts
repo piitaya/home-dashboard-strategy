@@ -1,16 +1,16 @@
 import { ReactiveElement } from "lit";
 import { customElement } from "lit/decorators.js";
+import { computeDomain } from "../../ha/common/entity";
 import { LovelaceBadgeConfig } from "../../ha/data/lovelace/config/badge";
 import { LovelaceSectionConfig } from "../../ha/data/lovelace/config/section";
 import { LovelaceViewConfig } from "../../ha/data/lovelace/config/view";
 import { HomeAssistant } from "../../ha/types";
 import {
   entityFilter,
-  excludeIds,
+  excludeEntityIds,
   getEntityArea,
   HIDDEN_DOMAIN,
 } from "../../helpers/entity";
-import { computeDomain } from "../../ha/common/entity";
 
 export type AreaViewStrategyConfig = {
   area?: string;
@@ -48,10 +48,48 @@ export class AreaViewStrategy extends ReactiveElement {
       return areaId === config.area;
     });
 
+    // Badges
+    const temperatureSensorIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: "sensor",
+        device_class: "temperature",
+      })
+    );
+    entityIds = excludeEntityIds(entityIds, temperatureSensorIds);
+
+    if (temperatureSensorIds.length > 0) {
+      badges.push(
+        ...temperatureSensorIds.map((entityId) => ({
+          type: "entity",
+          entity: entityId,
+          color: "red",
+        }))
+      );
+    }
+
+    const humiditySensorIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: "sensor",
+        device_class: "humidity",
+      })
+    );
+    entityIds = excludeEntityIds(entityIds, humiditySensorIds);
+
+    if (humiditySensorIds.length > 0) {
+      badges.push(
+        ...humiditySensorIds.map((entityId) => ({
+          type: "entity",
+          entity: entityId,
+          color: "purple",
+        }))
+      );
+    }
+
+    // Lights section
     const lightIds = entityIds.filter(entityFilter(hass, { domain: "light" }));
+    entityIds = excludeEntityIds(entityIds, lightIds);
 
     if (lightIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(lightIds));
       sections.push({
         type: "grid",
         cards: [
@@ -68,19 +106,85 @@ export class AreaViewStrategy extends ReactiveElement {
       });
     }
 
-    const coverIds = entityIds.filter(entityFilter(hass, { domain: "cover" }));
+    // Climate section
+    const coverIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: "cover",
+        device_class: [
+          "shutter",
+          "awning",
+          "blind",
+          "curtain",
+          "shade",
+          "shutter",
+          "window",
+        ],
+      })
+    );
+    entityIds = excludeEntityIds(entityIds, coverIds);
 
-    if (coverIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(coverIds));
+    const climateIds = entityIds.filter(
+      entityFilter(hass, { domain: ["climate", "humidifier"] })
+    );
+    entityIds = excludeEntityIds(entityIds, climateIds);
+
+    const windowSensorIds = entityIds.filter(
+      entityFilter(hass, { domain: "binary_sensor", device_class: "window" })
+    );
+    entityIds = excludeEntityIds(entityIds, windowSensorIds);
+
+    if (
+      coverIds.length > 0 ||
+      climateIds.length > 0 ||
+      windowSensorIds.length > 0
+    ) {
       sections.push({
         type: "grid",
         cards: [
           {
             type: "heading",
-            heading: "Cover",
-            icon: "mdi:window-shutter",
+            heading: "Climate",
+            icon: "mdi:home-thermometer",
           },
+          ...(coverIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Shutters",
+                  heading_style: "subtitle",
+                  icon: "mdi:window-shutter",
+                },
+              ]
+            : []),
           ...coverIds.map((entityId) => ({
+            type: "tile",
+            entity: entityId,
+          })),
+          ...(climateIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Thermostat and humidifier",
+                  heading_style: "subtitle",
+                  icon: "mdi:thermostat",
+                },
+              ]
+            : []),
+          ...climateIds.map((entityId) => ({
+            type: "tile",
+            entity: entityId,
+          })),
+          ...(windowSensorIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Sensors",
+                  heading_style: "subtitle",
+                  icon: "mdi:window-open",
+                },
+              ]
+            : []),
+          ...windowSensorIds.map((entityId) => ({
             type: "tile",
             entity: entityId,
           })),
@@ -88,55 +192,21 @@ export class AreaViewStrategy extends ReactiveElement {
       });
     }
 
-    const temperatureSensorIds = entityIds.filter(
-      entityFilter(hass, {
-        domain: "sensor",
-        device_class: "temperature",
-      })
-    );
-
-    if (temperatureSensorIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(temperatureSensorIds));
-      badges.push(
-        ...temperatureSensorIds.map((entityId) => ({
-          type: "entity",
-          entity: entityId,
-          color: "red",
-        }))
-      );
-    }
-
-    const humiditySensorIds = entityIds.filter(
-      entityFilter(hass, {
-        device_class: "humidity",
-      })
-    );
-
-    if (humiditySensorIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(humiditySensorIds));
-      badges.push(
-        ...humiditySensorIds.map((entityId) => ({
-          type: "entity",
-          entity: entityId,
-          color: "purple",
-        }))
-      );
-    }
-
+    // Entertainment section
     const mediaPlayerIds = entityIds.filter(
       entityFilter(hass, {
         domain: "media_player",
       })
     );
+    entityIds = excludeEntityIds(entityIds, mediaPlayerIds);
 
     if (mediaPlayerIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(mediaPlayerIds));
       sections.push({
         type: "grid",
         cards: [
           {
             type: "heading",
-            heading: "Media players",
+            heading: "Entertainment",
             icon: "mdi:multimedia",
           },
           ...mediaPlayerIds.map((entityId) => ({
@@ -148,38 +218,35 @@ export class AreaViewStrategy extends ReactiveElement {
       });
     }
 
-    const climateIds = entityIds.filter(
-      entityFilter(hass, {
-        domain: ["climate", "humidifier"],
-      })
-    );
-
-    if (climateIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(climateIds));
-      sections.push({
-        type: "grid",
-        cards: [
-          {
-            type: "heading",
-            heading: "Climate",
-            icon: "mdi:thermostat",
-          },
-          ...climateIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
-        ],
-      });
-    }
-
+    // Security section
     const securityIds = entityIds.filter(
       entityFilter(hass, {
         domain: ["lock", "alarm_control_panel"],
       })
     );
+    entityIds = excludeEntityIds(entityIds, securityIds);
 
-    if (securityIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(securityIds));
+    const doorIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: ["cover"],
+        device_class: ["door", "garage", "gate"],
+      })
+    );
+    entityIds = excludeEntityIds(entityIds, doorIds);
+
+    const doorSensorIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: ["binary_sensor"],
+        device_class: ["door", "garage_door"],
+      })
+    );
+    entityIds = excludeEntityIds(entityIds, doorSensorIds);
+
+    if (
+      securityIds.length > 0 ||
+      doorIds.length > 0 ||
+      doorSensorIds.length > 0
+    ) {
       sections.push({
         type: "grid",
         cards: [
@@ -188,23 +255,62 @@ export class AreaViewStrategy extends ReactiveElement {
             heading: "Security",
             icon: "mdi:shield",
           },
-          ...securityIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
+          ...(securityIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Alarm and locks",
+                  heading_style: "subtitle",
+                  icon: "mdi:alarm-light",
+                },
+                ...securityIds.map((entityId) => ({
+                  type: "tile",
+                  entity: entityId,
+                })),
+              ]
+            : []),
+          ...(doorIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Doors",
+                  heading_style: "subtitle",
+                  icon: "mdi:door",
+                },
+                ...doorIds.map((entityId) => ({
+                  type: "tile",
+                  entity: entityId,
+                })),
+              ]
+            : []),
+          ...(doorSensorIds.length > 0
+            ? [
+                {
+                  type: "heading",
+                  heading: "Sensors",
+                  heading_style: "subtitle",
+                  icon: "mdi:wifi",
+                },
+                ...doorSensorIds.map((entityId) => ({
+                  type: "tile",
+                  entity: entityId,
+                })),
+              ]
+            : []),
         ],
       });
     }
 
+    // Power section
     const powerSensorIds = entityIds.filter(
       entityFilter(hass, {
         domain: "sensor",
         device_class: ["power"],
       })
     );
+    entityIds = excludeEntityIds(entityIds, lightIds);
 
     if (powerSensorIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(powerSensorIds));
       sections.push({
         type: "grid",
         cards: [
@@ -231,20 +337,17 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: ["energy"],
       })
     );
-
-    if (energySensorIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(energySensorIds));
-      // Only hide them, do not show them in a section
-    }
+    // Only hide them, do not show them in a section
+    entityIds = excludeEntityIds(entityIds, energySensorIds);
 
     const otherSensorIds = entityIds.filter(
       entityFilter(hass, {
         domain: ["sensor", "binary_sensor"],
       })
     );
+    entityIds = excludeEntityIds(entityIds, otherSensorIds);
 
     if (otherSensorIds.length > 0) {
-      entityIds = entityIds.filter(excludeIds(otherSensorIds));
       sections.push({
         type: "grid",
         cards: [

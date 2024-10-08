@@ -41,7 +41,12 @@ type EntityFilter = {
   device_class?: string | string[];
 };
 
-export const entityFilter = (hass: HomeAssistant, filter: EntityFilter) => {
+type EntityFilterFunc = (entityId: string) => boolean;
+
+export const entityFilter = (
+  hass: HomeAssistant,
+  filter: EntityFilter
+): EntityFilterFunc => {
   const domains = ensureArray(filter.domain) ?? [];
   const deviceClasses = ensureArray(filter.device_class) ?? [];
   return (entityId: string) => {
@@ -66,5 +71,12 @@ export const entityFilter = (hass: HomeAssistant, filter: EntityFilter) => {
   };
 };
 
-export const excludeIds = (ids: string[]) => (entityId: string) =>
+export const excludeId = (ids: string[]) => (entityId: string) =>
   !ids.includes(entityId);
+
+export const excludeEntityIds = (ids: string[], excludeIds: string[]) => {
+  if (excludeIds.length === 0) {
+    return ids;
+  }
+  return ids.filter((id) => !excludeIds.includes(id));
+};
