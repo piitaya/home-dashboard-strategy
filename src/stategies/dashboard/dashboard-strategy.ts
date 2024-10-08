@@ -7,7 +7,7 @@ import { computeAreaPath } from "../../helpers/area";
 
 export type DashboardStrategyConfig = {};
 
-@customElement("ll-strategy-dashboard-physaroom")
+@customElement("ll-strategy-home-lab")
 export class DashboardStrategy extends ReactiveElement {
   static async generate(
     _config: DashboardStrategyConfig,
@@ -21,7 +21,7 @@ export class DashboardStrategy extends ReactiveElement {
       path: computeAreaPath(area),
       subview: true,
       strategy: {
-        type: "custom:physaroom-area",
+        type: "custom:home-area-lab",
         area: area.area_id,
       },
     }));
@@ -33,7 +33,7 @@ export class DashboardStrategy extends ReactiveElement {
           icon: "mdi:home",
           path: "home",
           strategy: {
-            type: "custom:physaroom-home",
+            type: "custom:home-overview-lab",
           },
         },
         ...areaViews,

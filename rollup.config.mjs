@@ -33,7 +33,7 @@ const plugins = [
 
 export default [
     {
-        input: "src/physaroom.ts",
+        input: "src/home.ts",
         output: {
             dir: "dist",
             format: "es",

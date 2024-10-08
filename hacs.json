@@ -1,6 +1,6 @@
 {
-  "name": "Physaroom",
-  "filename": "physaroom.js",
+  "name": "Home dashboard strategy (lab)",
+  "filename": "home-dashboard-strategy-lab.js",
   "homeassistant": "2024.10.0",
   "render_readme": true
 }

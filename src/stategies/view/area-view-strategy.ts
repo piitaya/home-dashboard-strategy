@@ -19,7 +19,7 @@ export type AreaViewStrategyConfig = {
   area?: string;
 };
 
-@customElement("ll-strategy-view-physaroom-area")
+@customElement("ll-strategy-view-home-area-lab")
 export class AreaViewStrategy extends ReactiveElement {
   static async generate(
     config: AreaViewStrategyConfig,

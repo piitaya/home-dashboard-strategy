@@ -16,7 +16,7 @@ import { computeAreaPath } from "../../helpers/area";
 
 export type HomeViewStrategyConfig = {};
 
-@customElement("ll-strategy-view-physaroom-home")
+@customElement("ll-strategy-view-home-overview-lab")
 export class HomeViewStrategy extends ReactiveElement {
   static async generate(
     _config: HomeViewStrategyConfig,
