@@ -312,10 +312,6 @@ export class AreaViewStrategy extends ReactiveElement {
                   heading_style: "subtitle",
                   icon: "mdi:wifi",
                 },
-                ...doorSensorIds.map((entityId) => ({
-                  type: "tile",
-                  entity: entityId,
-                })),
               ]
             : []),
           ...doorSensorIds.map((entityId) => ({
