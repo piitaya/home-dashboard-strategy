@@ -3,6 +3,7 @@ import { customElement } from "lit/decorators.js";
 import { LovelaceConfig } from "../../ha/data/lovelace/config/types";
 import { HomeAssistant } from "../../ha/types";
 import { LovelaceStrategyViewConfig } from "../../ha/data/lovelace/config/view";
+import { computeAreaPath } from "../../helpers/area";
 
 export type DashboardStrategyConfig = {};
 
@@ -17,7 +18,8 @@ export class DashboardStrategy extends ReactiveElement {
     const areaViews = area.map<LovelaceStrategyViewConfig>((area) => ({
       title: area.name,
       icon: area.icon || undefined,
-      path: `areas-${area.area_id}`,
+      path: computeAreaPath(area),
+      subview: true,
       strategy: {
         type: "custom:physaroom-area",
         area: area.area_id,

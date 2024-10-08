@@ -1,5 +1,5 @@
 import { ReactiveElement } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { computeDomain } from "../../ha/common/entity";
 import { LovelaceBadgeConfig } from "../../ha/data/lovelace/config/badge";
 import { LovelaceSectionConfig } from "../../ha/data/lovelace/config/section";
@@ -7,10 +7,11 @@ import { LovelaceViewConfig } from "../../ha/data/lovelace/config/view";
 import { HomeAssistant } from "../../ha/types";
 import {
   entityFilter,
-  excludeEntityIds,
   getEntityArea,
   HIDDEN_DOMAIN,
 } from "../../helpers/entity";
+import { arrayDiff } from "../../common/array";
+import { lightSupportsBrightness } from "../../ha/data/light";
 
 export type AreaViewStrategyConfig = {
   area?: string;
@@ -55,7 +56,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: "temperature",
       })
     );
-    entityIds = excludeEntityIds(entityIds, temperatureSensorIds);
+    entityIds = arrayDiff(entityIds, temperatureSensorIds);
 
     if (temperatureSensorIds.length > 0) {
       badges.push(
@@ -73,7 +74,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: "humidity",
       })
     );
-    entityIds = excludeEntityIds(entityIds, humiditySensorIds);
+    entityIds = arrayDiff(entityIds, humiditySensorIds);
 
     if (humiditySensorIds.length > 0) {
       badges.push(
@@ -85,9 +86,26 @@ export class AreaViewStrategy extends ReactiveElement {
       );
     }
 
+    const presenceSensorIds = entityIds.filter(
+      entityFilter(hass, {
+        domain: "binary_sensor",
+        device_class: ["motion", "occupancy", "presence"],
+      })
+    );
+    entityIds = arrayDiff(entityIds, presenceSensorIds);
+
+    if (presenceSensorIds.length > 0) {
+      badges.push(
+        ...presenceSensorIds.map((entityId) => ({
+          type: "entity",
+          entity: entityId,
+        }))
+      );
+    }
+
     // Lights section
     const lightIds = entityIds.filter(entityFilter(hass, { domain: "light" }));
-    entityIds = excludeEntityIds(entityIds, lightIds);
+    entityIds = arrayDiff(entityIds, lightIds);
 
     if (lightIds.length > 0) {
       sections.push({
@@ -98,10 +116,17 @@ export class AreaViewStrategy extends ReactiveElement {
             heading: "Lights",
             icon: "mdi:lamps",
           },
-          ...lightIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
+          ...lightIds.map((entityId) => {
+            const stateObj = hass.states[entityId];
+            const supportsBrightness = lightSupportsBrightness(stateObj);
+            return {
+              type: "tile",
+              entity: entityId,
+              ...(supportsBrightness
+                ? { features: [{ type: "light-brightness" }] }
+                : {}),
+            };
+          }),
         ],
       });
     }
@@ -121,17 +146,17 @@ export class AreaViewStrategy extends ReactiveElement {
         ],
       })
     );
-    entityIds = excludeEntityIds(entityIds, coverIds);
+    entityIds = arrayDiff(entityIds, coverIds);
 
     const climateIds = entityIds.filter(
       entityFilter(hass, { domain: ["climate", "humidifier"] })
     );
-    entityIds = excludeEntityIds(entityIds, climateIds);
+    entityIds = arrayDiff(entityIds, climateIds);
 
     const windowSensorIds = entityIds.filter(
       entityFilter(hass, { domain: "binary_sensor", device_class: "window" })
     );
-    entityIds = excludeEntityIds(entityIds, windowSensorIds);
+    entityIds = arrayDiff(entityIds, windowSensorIds);
 
     if (
       coverIds.length > 0 ||
@@ -198,7 +223,7 @@ export class AreaViewStrategy extends ReactiveElement {
         domain: "media_player",
       })
     );
-    entityIds = excludeEntityIds(entityIds, mediaPlayerIds);
+    entityIds = arrayDiff(entityIds, mediaPlayerIds);
 
     if (mediaPlayerIds.length > 0) {
       sections.push({
@@ -224,7 +249,7 @@ export class AreaViewStrategy extends ReactiveElement {
         domain: ["lock", "alarm_control_panel"],
       })
     );
-    entityIds = excludeEntityIds(entityIds, securityIds);
+    entityIds = arrayDiff(entityIds, securityIds);
 
     const doorIds = entityIds.filter(
       entityFilter(hass, {
@@ -232,7 +257,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: ["door", "garage", "gate"],
       })
     );
-    entityIds = excludeEntityIds(entityIds, doorIds);
+    entityIds = arrayDiff(entityIds, doorIds);
 
     const doorSensorIds = entityIds.filter(
       entityFilter(hass, {
@@ -240,7 +265,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: ["door", "garage_door"],
       })
     );
-    entityIds = excludeEntityIds(entityIds, doorSensorIds);
+    entityIds = arrayDiff(entityIds, doorSensorIds);
 
     if (
       securityIds.length > 0 ||
@@ -308,7 +333,7 @@ export class AreaViewStrategy extends ReactiveElement {
         device_class: ["power"],
       })
     );
-    entityIds = excludeEntityIds(entityIds, lightIds);
+    entityIds = arrayDiff(entityIds, lightIds);
 
     if (powerSensorIds.length > 0) {
       sections.push({
@@ -323,14 +348,15 @@ export class AreaViewStrategy extends ReactiveElement {
               navigation_path: "/energy",
             },
           },
-          ...powerSensorIds.map((entityId) => ({
-            type: "tile",
-            entity: entityId,
-          })),
+          {
+            type: "history-graph",
+            entities: powerSensorIds,
+            hours_to_show: 6,
+          },
         ],
       });
     }
-    entityIds = excludeEntityIds(entityIds, powerSensorIds);
+    entityIds = arrayDiff(entityIds, powerSensorIds);
 
     const energySensorIds = entityIds.filter(
       entityFilter(hass, {
@@ -339,7 +365,7 @@ export class AreaViewStrategy extends ReactiveElement {
       })
     );
     // Only hide them, do not show them in a section
-    entityIds = excludeEntityIds(entityIds, energySensorIds);
+    entityIds = arrayDiff(entityIds, energySensorIds);
 
     // Other sensors
     const otherSensorIds = entityIds.filter(
@@ -347,11 +373,12 @@ export class AreaViewStrategy extends ReactiveElement {
         domain: ["sensor", "binary_sensor"],
       })
     );
-    entityIds = excludeEntityIds(entityIds, otherSensorIds);
+    entityIds = arrayDiff(entityIds, otherSensorIds);
 
     if (otherSensorIds.length > 0) {
       sections.push({
         type: "grid",
+        column_span: 4,
         cards: [
           {
             type: "heading",

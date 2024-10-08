@@ -70,13 +70,3 @@ export const entityFilter = (
     return true;
   };
 };
-
-export const excludeId = (ids: string[]) => (entityId: string) =>
-  !ids.includes(entityId);
-
-export const excludeEntityIds = (ids: string[], excludeIds: string[]) => {
-  if (excludeIds.length === 0) {
-    return ids;
-  }
-  return ids.filter((id) => !excludeIds.includes(id));
-};
