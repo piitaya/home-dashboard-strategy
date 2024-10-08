@@ -330,6 +330,7 @@ export class AreaViewStrategy extends ReactiveElement {
         ],
       });
     }
+    entityIds = excludeEntityIds(entityIds, powerSensorIds);
 
     const energySensorIds = entityIds.filter(
       entityFilter(hass, {
