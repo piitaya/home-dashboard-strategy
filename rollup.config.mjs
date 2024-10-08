@@ -33,7 +33,7 @@ const plugins = [
 
 export default [
     {
-        input: "src/home.ts",
+        input: "src/home-strategy.ts",
         output: {
             dir: "dist",
             format: "es",
