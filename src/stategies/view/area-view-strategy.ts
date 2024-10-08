@@ -263,12 +263,12 @@ export class AreaViewStrategy extends ReactiveElement {
                   heading_style: "subtitle",
                   icon: "mdi:alarm-light",
                 },
-                ...securityIds.map((entityId) => ({
-                  type: "tile",
-                  entity: entityId,
-                })),
               ]
             : []),
+          ...securityIds.map((entityId) => ({
+            type: "tile",
+            entity: entityId,
+          })),
           ...(doorIds.length > 0
             ? [
                 {
@@ -277,10 +277,6 @@ export class AreaViewStrategy extends ReactiveElement {
                   heading_style: "subtitle",
                   icon: "mdi:door",
                 },
-                ...doorIds.map((entityId) => ({
-                  type: "tile",
-                  entity: entityId,
-                })),
               ]
             : []),
           ...(doorSensorIds.length > 0
@@ -297,6 +293,10 @@ export class AreaViewStrategy extends ReactiveElement {
                 })),
               ]
             : []),
+          ...doorSensorIds.map((entityId) => ({
+            type: "tile",
+            entity: entityId,
+          })),
         ],
       });
     }
@@ -341,6 +341,7 @@ export class AreaViewStrategy extends ReactiveElement {
     // Only hide them, do not show them in a section
     entityIds = excludeEntityIds(entityIds, energySensorIds);
 
+    // Other sensors
     const otherSensorIds = entityIds.filter(
       entityFilter(hass, {
         domain: ["sensor", "binary_sensor"],
@@ -365,6 +366,7 @@ export class AreaViewStrategy extends ReactiveElement {
       });
     }
 
+    // Others
     const otherIds = entityIds;
 
     if (otherIds.length > 0) {
